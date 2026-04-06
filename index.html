@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>17 & 4 – Online Kartenspiel</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --felt-green: #1a6b3c;
+    --felt-dark: #124d2b;
+    --felt-light: #22834a;
+    --wood-dark: #3b1a0a;
+    --wood-mid: #5c2e10;
+    --wood-light: #8b4513;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dark: #8a6a20;
+    --chip-red: #c0392b;
+    --chip-red-light: #e74c3c;
+    --white-card: #f5f0e8;
+    --text-light: #f0e8d0;
+    --shadow-deep: rgba(0,0,0,0.6);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    background: var(--wood-dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Wood texture background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        92deg,
+        transparent,
+        transparent 60px,
+        rgba(0,0,0,0.03) 60px,
+        rgba(0,0,0,0.03) 61px
+      ),
+      repeating-linear-gradient(
+        180deg,
+        transparent,
+        transparent 3px,
+        rgba(255,255,255,0.015) 3px,
+        rgba(255,255,255,0.015) 4px
+      ),
+      radial-gradient(ellipse at 20% 50%, #6b3012 0%, #3b1a0a 50%, #1e0d05 100%);
+    z-index: 0;
+  }
+
+  /* Floral pattern overlay like the original */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse at 10% 20%, rgba(139,69,19,0.4) 0%, transparent 40%),
+      radial-gradient(ellipse at 90% 80%, rgba(139,69,19,0.4) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.3) 0%, transparent 70%);
+    z-index: 0;
+  }
+
+  .page-wrapper {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== HEADER / DOWNLOAD BAR ===== */
+  .download-bar {
+    background: linear-gradient(180deg, #1a0a02 0%, #2d1205 50%, #1a0a02 100%);
+    border-bottom: 3px solid var(--gold-dark);
+    padding: 14px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    position: relative;
+  }
+
+  .download-bar::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+
+  .download-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-badge {
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-dark));
+    border: 2px solid var(--gold-light);
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--wood-dark);
+    letter-spacing: 2px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  .logo-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .download-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #2d6a1f, #3d8a2a, #2d6a1f);
+    border: 2px solid #5ab040;
+    border-radius: 8px;
+    padding: 10px 24px;
+    text-decoration: none;
+    color: #d4f0c0;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .download-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+  }
+
+  .download-btn:hover::before { left: 100%; }
+  .download-btn:hover {
+    background: linear-gradient(135deg, #3d8a2a, #4daa35, #3d8a2a);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 15px rgba(90,176,64,0.3);
+    transform: translateY(-1px);
+  }
+
+  .android-icon {
+    width: 22px; height: 22px;
+    fill: #d4f0c0;
+  }
+
+  /* ===== MAIN CONTENT ===== */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 40px;
+  }
+
+  /* ===== FELT TABLE (decorative) ===== */
+  .table-decoration {
+    position: relative;
+    width: min(700px, 90vw);
+    height: 120px;
+    background: radial-gradient(ellipse at 50% 60%, var(--felt-light) 0%, var(--felt-green) 50%, var(--felt-dark) 100%);
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    border: 8px solid var(--wood-mid);
+    border-bottom: none;
+    box-shadow:
+      0 -8px 30px rgba(0,0,0,0.5),
+      inset 0 10px 40px rgba(0,0,0,0.2),
+      0 0 60px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .table-decoration::before {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    border: 2px solid rgba(255,255,255,0.08);
+    border-bottom: none;
+  }
+
+  .table-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    color: var(--gold-light);
+    text-shadow:
+      0 0 20px rgba(201,168,76,0.8),
+      0 3px 6px rgba(0,0,0,0.8),
+      0 0 40px rgba(201,168,76,0.4);
+    letter-spacing: 4px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .table-title span {
+    color: var(--chip-red-light);
+    text-shadow:
+      0 0 20px rgba(231,76,60,0.8),
+      0 3px 6px rgba(0,0,0,0.8);
+  }
+
+  /* ===== AUTH + TABLE SECTION ===== */
+  .panels-row {
+    display: flex;
+    gap: 30px;
+    width: min(1000px, 95vw);
+    align-items: flex-start;
+  }
+
+  .panel {
+    background: linear-gradient(160deg, rgba(26,107,60,0.15) 0%, rgba(18,77,43,0.25) 100%);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(201,168,76,0.1);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .panel-header {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .panel-title {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel-title::before {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--gold);
+  }
+
+  .panel-body { padding: 24px 28px; }
+
+  /* ===== LOGIN PANEL ===== */
+  .login-panel { flex: 0 0 320px; }
+
+  .form-group { margin-bottom: 20px; }
+
+  .form-label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .form-input {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 6px;
+    padding: 12px 16px;
+    color: var(--text-light);
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+    outline: none;
+  }
+
+  .form-input::placeholder { color: rgba(240,232,208,0.3); }
+
+  .form-input:focus {
+    border-color: var(--gold);
+    background: rgba(0,0,0,0.5);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1), 0 0 15px rgba(201,168,76,0.1);
+  }
+
+  .chips-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin-bottom: 24px;
+  }
+
+  .chip-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #e74c3c, #922b21);
+    border: 3px solid rgba(255,255,255,0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 900;
+    color: white;
+    font-family: 'Cinzel', serif;
+  }
+
+  .chip-balance {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold-light);
+    text-shadow: 0 0 10px rgba(201,168,76,0.5);
+    letter-spacing: 1px;
+  }
+
+  .chip-label {
+    font-size: 11px;
+    color: rgba(240,232,208,0.5);
+    letter-spacing: 1px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+    border: none;
+    border-radius: 8px;
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--wood-dark);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.4s;
+  }
+
+  .btn-primary:hover::after { left: 100%; }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.3);
+  }
+
+  .btn-primary:active { transform: translateY(0); }
+
+  .register-link {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: rgba(240,232,208,0.5);
+  }
+
+  .register-link a {
+    color: var(--gold);
+    text-decoration: none;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+
+  .register-link a:hover { color: var(--gold-light); }
+
+  /* ===== TABLES PANEL ===== */
+  .tables-panel { flex: 1; }
+
+  .tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
+  }
+
+  .table-card {
+    background: linear-gradient(160deg, rgba(26,107,60,0.3) 0%, rgba(18,77,43,0.5) 100%);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .table-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(201,168,76,0.05) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .table-card:hover::before { opacity: 1; }
+
+  .table-card:hover {
+    border-color: var(--gold);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.15);
+  }
+
+  .table-card.full {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .table-card.full:hover {
+    transform: none;
+    border-color: rgba(201,168,76,0.2);
+    box-shadow: none;
+  }
+
+  .table-mini-felt {
+    width: 100%;
+    height: 70px;
+    background: radial-gradient(ellipse, var(--felt-light) 0%, var(--felt-green) 60%, var(--felt-dark) 100%);
+    border-radius: 50% / 40%;
+    margin-bottom: 12px;
+    border: 3px solid var(--wood-mid);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .table-mini-felt::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50% / 40%;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .seat-dots {
+    display: flex;
+    gap: 5px;
+    position: absolute;
+    bottom: 8px;
+  }
+
+  .seat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: background 0.2s;
+  }
+
+  .seat-dot.occupied {
+    background: var(--chip-red);
+    border-color: rgba(255,100,80,0.5);
+    box-shadow: 0 0 5px rgba(192,57,43,0.6);
+  }
+
+  .table-name {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-light);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .table-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .table-players {
+    font-size: 12px;
+    color: rgba(240,232,208,0.6);
+    font-family: 'Lato', sans-serif;
+  }
+
+  .table-stakes {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    color: var(--gold);
+    font-weight: 700;
+    background: rgba(201,168,76,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(201,168,76,0.2);
+  }
+
+  .table-status-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-size: 9px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 1px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+
+  .badge-open {
+    background: rgba(46,204,113,0.2);
+    color: #2ecc71;
+    border: 1px solid rgba(46,204,113,0.3);
+  }
+
+  .badge-full {
+    background: rgba(192,57,43,0.2);
+    color: #e74c3c;
+    border: 1px solid rgba(192,57,43,0.3);
+  }
+
+  .badge-waiting {
+    background: rgba(243,156,18,0.2);
+    color: #f39c12;
+    border: 1px solid rgba(243,156,18,0.3);
+  }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    border-top: 1px solid rgba(201,168,76,0.15);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+  }
+
+  .footer-text {
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+    color: rgba(240,232,208,0.3);
+    letter-spacing: 1px;
+  }
+
+  .footer-sep {
+    color: var(--gold-dark);
+    opacity: 0.4;
+  }
+
+  /* ===== TABLE ACTION BUTTONS ===== */
+  .table-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .btn-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    transition: left 0.4s;
+  }
+
+  .btn-action:hover::before { left: 100%; }
+
+  .btn-all-tables {
+    background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.22));
+    border: 1px solid rgba(201,168,76,0.35);
+    color: var(--gold-light);
+  }
+
+  .btn-all-tables:hover {
+    background: linear-gradient(135deg, rgba(201,168,76,0.22), rgba(201,168,76,0.38));
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 15px rgba(201,168,76,0.15);
+  }
+
+  .btn-random {
+    background: linear-gradient(135deg, rgba(46,204,113,0.12), rgba(46,204,113,0.22));
+    border: 1px solid rgba(46,204,113,0.35);
+    color: #2ecc71;
+  }
+
+  .btn-random:hover {
+    background: linear-gradient(135deg, rgba(46,204,113,0.22), rgba(46,204,113,0.38));
+    border-color: #2ecc71;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 15px rgba(46,204,113,0.15);
+  }
+
+  .btn-random.spinning .spin-icon {
+    animation: spinOnce 0.55s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  @keyframes spinOnce {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* ===== ALL TABLES MODAL ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: linear-gradient(160deg, #1c0e04 0%, #251508 100%);
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 16px;
+    width: min(860px, 94vw);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.9), 0 0 40px rgba(201,168,76,0.08);
+    transform: translateY(30px) scale(0.97);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .modal-overlay.open .modal {
+    transform: translateY(0) scale(1);
+  }
+
+  .modal-header {
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .modal-title-wrap { display: flex; flex-direction: column; gap: 4px; }
+
+  .modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: 3px;
+  }
+
+  .modal-count {
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+    color: rgba(240,232,208,0.4);
+    letter-spacing: 1px;
+  }
+
+  .modal-close {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(201,168,76,0.2);
+    color: var(--gold);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+
+  .modal-close:hover {
+    background: rgba(201,168,76,0.15);
+    border-color: var(--gold);
+  }
+
+  .modal-filters {
+    padding: 12px 28px;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(240,232,208,0.45);
+  }
+
+  .filter-btn.active, .filter-btn:hover {
+    background: rgba(201,168,76,0.15);
+    border-color: rgba(201,168,76,0.4);
+    color: var(--gold-light);
+  }
+
+  .modal-body {
+    overflow-y: auto;
+    padding: 16px 28px;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201,168,76,0.3) transparent;
+  }
+
+  .modal-body::-webkit-scrollbar { width: 6px; }
+  .modal-body::-webkit-scrollbar-track { background: transparent; }
+  .modal-body::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 3px; }
+
+  .modal-table-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .modal-table-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(201,168,76,0.08);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .modal-table-row:hover:not(.row-full) {
+    background: rgba(26,107,60,0.2);
+    border-color: rgba(201,168,76,0.28);
+    transform: translateX(4px);
+  }
+
+  .modal-table-row.row-full { opacity: 0.38; cursor: not-allowed; }
+
+  .row-number {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    color: rgba(240,232,208,0.28);
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .row-mini-felt {
+    width: 36px; height: 22px;
+    background: radial-gradient(ellipse, var(--felt-light) 0%, var(--felt-green) 70%);
+    border-radius: 50%;
+    border: 2px solid var(--wood-mid);
+    flex-shrink: 0;
+  }
+
+  .row-name {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-light);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .row-seats { display: flex; gap: 4px; flex-shrink: 0; }
+
+  .row-seat {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+
+  .row-seat.occ {
+    background: var(--chip-red);
+    border-color: rgba(231,76,60,0.4);
+  }
+
+  .row-stakes {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    width: 56px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .row-badge {
+    font-size: 9px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 700;
+    width: 50px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .modal-footer {
+    padding: 12px 28px;
+    border-top: 1px solid rgba(201,168,76,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .pagination { display: flex; gap: 6px; align-items: center; }
+
+  .page-btn {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.15);
+    color: rgba(240,232,208,0.45);
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .page-btn:hover, .page-btn.active {
+    background: rgba(201,168,76,0.2);
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  .page-info {
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+    color: rgba(240,232,208,0.32);
+    letter-spacing: 1px;
+  }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: linear-gradient(135deg, #0e2a18, #133520);
+    border: 1px solid rgba(46,204,113,0.4);
+    border-radius: 10px;
+    padding: 13px 22px;
+    color: #2ecc71;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7), 0 0 20px rgba(46,204,113,0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ===== PAGE SYSTEM ===== */
+  .page { display: none; }
+  .page.active { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ===== LOBBY HEADER CHIP BADGE ===== */
+  .lobby-user-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .chip-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 20px;
+    padding: 6px 14px 6px 8px;
+  }
+
+  .chip-badge-icon {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #e74c3c, #8b1a10);
+    border: 2px solid rgba(255,255,255,0.25);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.9);
+    flex-shrink: 0;
+  }
+
+  .chip-badge-value {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: 1px;
+  }
+
+  .chip-badge-label {
+    font-family: 'Lato', sans-serif;
+    font-size: 10px;
+    color: rgba(240,232,208,0.45);
+    letter-spacing: 1px;
+  }
+
+  .lobby-username {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    opacity: 0.85;
+  }
+
+  .btn-logout {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 6px;
+    padding: 7px 14px;
+    color: rgba(240,232,208,0.45);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-logout:hover {
+    border-color: rgba(201,168,76,0.4);
+    color: var(--gold);
+  }
+
+  /* ===== REGISTER PAGE ===== */
+  .register-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 50px 20px;
+    gap: 32px;
+  }
+
+  .register-panel {
+    width: min(480px, 95vw);
+  }
+
+  .register-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+  }
+
+  .register-grid .form-group.full {
+    grid-column: 1 / -1;
+  }
+
+  .form-hint {
+    font-size: 11px;
+    color: rgba(240,232,208,0.35);
+    margin-top: 5px;
+    letter-spacing: 0.5px;
+    font-family: 'Lato', sans-serif;
+  }
+
+  .terms-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 22px;
+    margin-top: 4px;
+  }
+
+  .terms-row input[type=checkbox] {
+    width: 16px; height: 16px;
+    accent-color: var(--gold);
+    flex-shrink: 0;
+    margin-top: 2px;
+    cursor: pointer;
+  }
+
+  .terms-row label {
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+    color: rgba(240,232,208,0.45);
+    line-height: 1.5;
+    cursor: pointer;
+  }
+
+  .terms-row label a {
+    color: var(--gold);
+    text-decoration: none;
+  }
+
+  .back-link {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 13px;
+    color: rgba(240,232,208,0.4);
+  }
+
+  .back-link a {
+    color: var(--gold);
+    text-decoration: none;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+
+  .back-link a:hover { color: var(--gold-light); }
+
+  .strength-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.08);
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .strength-fill {
+    height: 100%;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s, background 0.3s;
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { text-shadow: 0 0 20px rgba(201,168,76,0.8), 0 3px 6px rgba(0,0,0,0.8); }
+    50% { text-shadow: 0 0 40px rgba(201,168,76,1), 0 3px 6px rgba(0,0,0,0.8), 0 0 60px rgba(201,168,76,0.5); }
+  }
+
+  .download-bar { animation: fadeInDown 0.5s ease both; }
+  .table-decoration { animation: fadeInUp 0.6s ease 0.1s both; }
+  .table-title { animation: glowPulse 3s ease-in-out infinite; }
+  .login-panel { animation: fadeInUp 0.6s ease 0.2s both; }
+  .tables-panel { animation: fadeInUp 0.6s ease 0.3s both; }
+
+  .table-card:nth-child(1) { animation: fadeInUp 0.5s ease 0.35s both; }
+  .table-card:nth-child(2) { animation: fadeInUp 0.5s ease 0.40s both; }
+  .table-card:nth-child(3) { animation: fadeInUp 0.5s ease 0.45s both; }
+  .table-card:nth-child(4) { animation: fadeInUp 0.5s ease 0.50s both; }
+  .table-card:nth-child(5) { animation: fadeInUp 0.5s ease 0.55s both; }
+  .table-card:nth-child(6) { animation: fadeInUp 0.5s ease 0.60s both; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .panels-row { flex-direction: column; }
+    .login-panel { flex: none; width: 100%; }
+    .download-bar { padding: 12px 20px; }
+    .download-btn span { display: none; }
+    .footer { flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="page active" id="page-login">
+<div class="page-wrapper">
+
+  <!-- DOWNLOAD BAR -->
+  <header class="download-bar">
+    <div class="download-bar-left">
+      <div class="logo-badge">17 &amp; 4</div>
+      <div>
+        <div class="logo-subtitle">Online Kartenspiel</div>
+      </div>
+    </div>
+    <a href="#" class="download-btn">
+      <svg class="android-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.523 15.341a.75.75 0 10-1.046 1.073l.523-.537zm-11 1.073a.75.75 0 10-1.046-1.073l1.046 1.073zM7.5 17.5l-.523-.537a.75.75 0 001.046 0L7.5 17.5zm9 0l-.523.537a.75.75 0 001.046 0L16.5 17.5zm-4.5 4a.75.75 0 000 1.5v-1.5zm0 1.5a.75.75 0 000-1.5V23zm-3-1.5a.75.75 0 000 1.5v-1.5zm0 1.5a.75.75 0 000-1.5V23zM3.75 9a.75.75 0 000 1.5V9zM3 9.75A.75.75 0 003.75 9v1.5A.75.75 0 003 9.75zm0 6v.75.75a.75.75 0 000-1.5zm.75.75A.75.75 0 003 15.75v1.5a.75.75 0 000-1.5zm.75-.75a.75.75 0 00-.75.75h1.5a.75.75 0 00-.75-.75zm-.75-6.75a.75.75 0 00.75.75V9a.75.75 0 00-.75.75zm17.25 6.75a.75.75 0 000 1.5v-1.5zm.75.75a.75.75 0 00-.75-.75v1.5a.75.75 0 00.75-.75zm0-6A.75.75 0 0021 9.75v1.5a.75.75 0 000-1.5zm-.75-.75a.75.75 0 00.75.75V9a.75.75 0 00-.75.75zM8.5 4.5l.537-.524a.75.75 0 00-1.073 0L8.5 4.5zm-2 2l-.537.524a.75.75 0 001.073 0L6.5 6.5zm7 -2 .537-.524a.75.75 0 00-1.073 0L15.5 4.5zm2 2l-.537.524a.75.75 0 001.073 0L17.5 6.5zM16.477 16.414l-8.954-9.414-1.046 1.073 8.954 9.414 1.046-1.073zm-8.954 0l8.954-9.414-1.046-1.073-8.954 9.414 1.046 1.073zm.5.623V21.5h1.5v-4.463h-1.5zm1.5 3.963h-3v1.5h3V21zm3-1.5V21.5h1.5v-4.463h-1.5zm0 3.963-3 .037V23l3-.037V21.5zM3.75 10.5h-.75v-1.5h.75v1.5zm-1.5 5.25v.75h1.5v-.75h-1.5zm.75.75h.75v-1.5H3v1.5zM20.25 10.5h.75v-1.5h-.75v1.5zm.75 5.25h-.75v1.5h.75v-1.5zm-1.5.75v-.75h1.5v.75h-1.5zM7.963 3.976l-2 2 1.073 1.046 2-2-1.073-1.046zm-2 3.073 2 2 1.073-1.046-2-2-1.073 1.046zm8.073-3.073L16.037 6l1.073-1.046-2-2-1.073 1.046zm.073 3.073 2-2-1.073-1.046-2 2 1.073 1.046zM6 9h12v-1.5H6V9zm12 0c1.243 0 2.25 1.007 2.25 2.25h1.5C21.75 8.574 19.926 7.5 18 7.5V9zM4.5 11.25C4.5 10.007 5.507 9 6.75 9v-1.5C4.574 7.5 3 9.074 3 11.25h1.5zM3 11.25V15.5h1.5V11.25H3zm18 0V15.5h1.5V11.25H21zm0 4.25c0 1.243-1.007 2.25-2.25 2.25v1.5C20.926 19.25 22.5 17.676 22.5 15.5H21zM18.75 17.5H6v1.5h12.75V17.5zm-12.75 0c-1.243 0-2.25-1.007-2.25-2.25H2.25C2.25 17.676 3.824 19.25 6 19.25v-1.5z"/>
+      </svg>
+      <span>Windows Client herunterladen</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+      </svg>
+    </a>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- TABLE HEADER DECORATION -->
+    <div class="table-decoration">
+      <div class="table-title">17 <span>&amp;</span> 4</div>
+    </div>
+
+    <!-- PANELS -->
+    <div class="panels-row" style="justify-content:center;">
+
+      <!-- LOGIN / REGISTER -->
+      <div class="panel login-panel">
+        <div class="panel-header">
+          <div class="panel-title">Anmelden</div>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">Benutzername</label>
+            <input type="text" class="form-input" id="loginUser" placeholder="Dein Spielername">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Passwort</label>
+            <input type="password" class="form-input" placeholder="••••••••">
+          </div>
+
+          <button class="btn-primary" onclick="showLobby()">Einloggen</button>
+
+          <div class="register-link">
+            Noch kein Konto? <a href="#" onclick="showRegister(); return false;">Jetzt registrieren</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span class="footer-text">© 2026 Nullpointer Studios</span>
+    <span class="footer-sep">◆</span>
+    <span class="footer-text">Nur für registrierte Spieler</span>
+    <span class="footer-sep">◆</span>
+    <span class="footer-text">Version 1.0</span>
+  </footer>
+
+</div><!-- end page-wrapper -->
+</div><!-- end page-login -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- LOBBY PAGE                                          -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page" id="page-lobby">
+<div class="page-wrapper">
+
+  <header class="download-bar">
+    <div class="download-bar-left">
+      <div class="logo-badge">17 &amp; 4</div>
+      <div>
+        <div class="logo-subtitle">Online Kartenspiel</div>
+      </div>
+    </div>
+    <div class="lobby-user-bar">
+      <div class="chip-badge">
+        <div class="chip-badge-icon">AA</div>
+        <div>
+          <div class="chip-badge-value">1 200</div>
+          <div class="chip-badge-label">CHIPS</div>
+        </div>
+      </div>
+      <div class="lobby-username" id="lobbyUsername">Spieler</div>
+      <button class="btn-logout" onclick="showLogin()">Abmelden</button>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="table-decoration">
+      <div class="table-title">17 <span>&amp;</span> 4</div>
+    </div>
+
+    <div class="panels-row" style="width:min(1000px,95vw);">
+      <div class="panel tables-panel" style="flex:1;">
+        <div class="panel-header">
+          <div class="panel-title">Tisch wählen</div>
+        </div>
+        <div class="panel-body">
+          <div class="table-actions">
+            <button class="btn-action btn-all-tables" onclick="openModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              Alle Tische
+            </button>
+            <button class="btn-action btn-random" id="randomBtn" onclick="joinRandom()">
+              <svg class="spin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+              Zufälliger Tisch
+            </button>
+          </div>
+          <div class="tables-grid">
+            <div class="table-card">
+              <span class="table-status-badge badge-open">FREI</span>
+              <div class="table-mini-felt"><div class="seat-dots"><div class="seat-dot occupied"></div><div class="seat-dot occupied"></div><div class="seat-dot"></div><div class="seat-dot"></div></div></div>
+              <div class="table-name">Grüner Salon</div>
+              <div class="table-meta"><span class="table-players">2 / 4 Spieler</span></div>
+            </div>
+            <div class="table-card">
+              <span class="table-status-badge badge-open">FREI</span>
+              <div class="table-mini-felt"><div class="seat-dots"><div class="seat-dot occupied"></div><div class="seat-dot"></div><div class="seat-dot"></div><div class="seat-dot"></div></div></div>
+              <div class="table-name">Goldener Raum</div>
+              <div class="table-meta"><span class="table-players">1 / 4 Spieler</span></div>
+            </div>
+            <div class="table-card full">
+              <span class="table-status-badge badge-full">VOLL</span>
+              <div class="table-mini-felt"><div class="seat-dots"><div class="seat-dot occupied"></div><div class="seat-dot occupied"></div><div class="seat-dot occupied"></div><div class="seat-dot occupied"></div></div></div>
+              <div class="table-name">Königssaal</div>
+              <div class="table-meta"><span class="table-players">4 / 4 Spieler</span></div>
+            </div>
+            <div class="table-card">
+              <span class="table-status-badge badge-waiting">WARTEN</span>
+              <div class="table-mini-felt"><div class="seat-dots"><div class="seat-dot occupied"></div><div class="seat-dot"></div><div class="seat-dot"></div><div class="seat-dot"></div></div></div>
+              <div class="table-name">Roter Tisch</div>
+              <div class="table-meta"><span class="table-players">1 / 4 Spieler</span></div>
+            </div>
+            <div class="table-card">
+              <span class="table-status-badge badge-open">FREI</span>
+              <div class="table-mini-felt"><div class="seat-dots"><div class="seat-dot occupied"></div><div class="seat-dot occupied"></div><div class="seat-dot occupied"></div><div class="seat-dot"></div></div></div>
+              <div class="table-name">Silber Zimmer</div>
+              <div class="table-meta"><span class="table-players">3 / 4 Spieler</span></div>
+            </div>
+            <div class="table-card">
+              <span class="table-status-badge badge-open">FREI</span>
+              <div class="table-mini-felt"><div class="seat-dots"><div class="seat-dot"></div><div class="seat-dot"></div><div class="seat-dot"></div><div class="seat-dot"></div></div></div>
+              <div class="table-name">Anfänger Tisch</div>
+              <div class="table-meta"><span class="table-players">0 / 4 Spieler</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span class="footer-text">© 2026 17 &amp; 4 Online</span>
+    <span class="footer-sep">◆</span>
+    <span class="footer-text">Nur für registrierte Spieler</span>
+    <span class="footer-sep">◆</span>
+    <span class="footer-text">Version 1.0</span>
+  </footer>
+
+</div>
+</div><!-- end page-lobby -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- REGISTER PAGE                                       -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page" id="page-register">
+<div class="page-wrapper">
+
+  <header class="download-bar">
+    <div class="download-bar-left">
+      <div class="logo-badge">17 &amp; 4</div>
+      <div>
+        <div class="logo-subtitle">Online Kartenspiel</div>
+      </div>
+    </div>
+    <a href="#" class="download-btn" onclick="return false;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      <span>Windows Client herunterladen</span>
+    </a>
+  </header>
+
+  <main class="register-main">
+
+    <div class="table-decoration" style="height:90px;">
+      <div class="table-title" style="font-size:clamp(20px,3.5vw,34px);">Registrieren</div>
+    </div>
+
+    <div class="panel register-panel">
+      <div class="panel-header">
+        <div class="panel-title">Neues Konto erstellen</div>
+      </div>
+      <div class="panel-body">
+        <div class="register-grid">
+
+          <div class="form-group">
+            <label class="form-label">Vorname</label>
+            <input type="text" class="form-input" placeholder="Max">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nachname</label>
+            <input type="text" class="form-input" placeholder="Mustermann">
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">Benutzername</label>
+            <input type="text" class="form-input" placeholder="Dein Spielername (wird angezeigt)">
+            <div class="form-hint">Wird anderen Spielern am Tisch angezeigt</div>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">E-Mail-Adresse</label>
+            <input type="email" class="form-input" placeholder="max@beispiel.de">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Passwort</label>
+            <input type="password" class="form-input" id="regPw" placeholder="••••••••" oninput="updateStrength(this.value)">
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <div class="form-hint" id="strengthLabel">Passwortstärke</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Passwort bestätigen</label>
+            <input type="password" class="form-input" placeholder="••••••••">
+          </div>
+
+        </div>
+
+        <div class="terms-row">
+          <input type="checkbox" id="terms">
+          <label for="terms">Ich stimme den <a href="#">Nutzungsbedingungen</a> und der <a href="#">Datenschutzerklärung</a> zu. Das Spiel ist kostenlos und nur zum Spaß.</label>
+        </div>
+
+        <button class="btn-primary" onclick="showLobby()">Konto erstellen</button>
+
+        <div class="back-link">
+          Bereits registriert? <a href="#" onclick="showLogin(); return false;">Zum Login</a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <span class="footer-text">© 2026 17 &amp; 4 Online</span>
+    <span class="footer-sep">◆</span>
+    <span class="footer-text">Nur für registrierte Spieler</span>
+    <span class="footer-sep">◆</span>
+    <span class="footer-text">Version 1.0</span>
+  </footer>
+
+</div>
+</div><!-- end page-register -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <div class="modal-title">Alle Tische</div>
+        <div class="modal-count" id="modalCount">248 Tische verfügbar</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-filters">
+      <button class="filter-btn active" onclick="setFilter(this,'all')">Alle</button>
+      <button class="filter-btn" onclick="setFilter(this,'open')">Frei</button>
+      <button class="filter-btn" onclick="setFilter(this,'waiting')">Warten</button>
+      <button class="filter-btn" onclick="setFilter(this,'full')">Voll</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-table-list" id="modalList"></div>
+    </div>
+    <div class="modal-footer">
+      <div class="page-info" id="pageInfo">Seite 1 von 25</div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toastMsg">Tisch gefunden!</span>
+</div>
+
+<script>
+  // ── Page navigation ───────────────────────────────────────────
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function showLobby() {
+    const user = document.getElementById('loginUser');
+    const name = (user && user.value.trim()) ? user.value.trim() : 'Spieler';
+    document.getElementById('lobbyUsername').textContent = name;
+    showPage('page-lobby');
+  }
+
+  function showRegister() { showPage('page-register'); }
+  function showLogin()    { showPage('page-login'); }
+
+  // ── Password strength ─────────────────────────────────────────
+  function updateStrength(val) {
+    const fill  = document.getElementById('strengthFill');
+    const label = document.getElementById('strengthLabel');
+    if (!fill) return;
+    let score = 0;
+    if (val.length >= 8)              score++;
+    if (/[A-Z]/.test(val))            score++;
+    if (/[0-9]/.test(val))            score++;
+    if (/[^A-Za-z0-9]/.test(val))     score++;
+    const levels = [
+      { w:'0%',   bg:'transparent',  t:'Passwortstärke' },
+      { w:'25%',  bg:'#e74c3c',      t:'Schwach' },
+      { w:'50%',  bg:'#e67e22',      t:'Mittel' },
+      { w:'75%',  bg:'#f1c40f',      t:'Gut' },
+      { w:'100%', bg:'#2ecc71',      t:'Stark' },
+    ];
+    const l = levels[score];
+    fill.style.width      = l.w;
+    fill.style.background = l.bg;
+    label.textContent     = l.t;
+    label.style.color     = score > 0 ? l.bg : 'rgba(240,232,208,0.35)';
+  }
+
+  // ── Data generation ──────────────────────────────────────────
+  const saalNames = [
+    'Grüner Salon','Goldener Raum','Königssaal','Roter Tisch','Silber Zimmer',
+    'Anfänger Tisch','Diamant Saal','Rubinsaal','Elfenbein Lounge','Smaragd Zimmer',
+    'Kristall Salon','Obsidian Tisch','Jade Raum','Opal Saal','Bernstein Zimmer',
+    'Marmor Lounge','Mahagoni Saal','Ebenholz Tisch','Zedernholz Raum','Teakholz Salon'
+  ];
+
+  function genTables(count) {
+    return Array.from({length: count}, (_, i) => {
+      const occ = Math.floor(Math.random() * 5);
+      let status = occ === 4 ? 'full' : occ === 0 ? 'waiting' : 'open';
+      return {
+        id: i + 1,
+        name: saalNames[i % saalNames.length] + (i >= saalNames.length ? ' ' + (Math.floor(i/saalNames.length)+1) : ''),
+        occ, status
+      };
+    });
+  }
+
+  const allTables = genTables(248);
+
+  // ── State ─────────────────────────────────────────────────────
+  let currentFilter = 'all';
+  let currentPage   = 1;
+  const PER_PAGE    = 12;
+
+  // ── Filter ────────────────────────────────────────────────────
+  function filtered() {
+    return allTables.filter(t => {
+      if (currentFilter === 'open')    return t.status === 'open';
+      if (currentFilter === 'waiting') return t.status === 'waiting';
+      if (currentFilter === 'full')    return t.status === 'full';
+      return true;
+    });
+  }
+
+  // ── Render modal list ─────────────────────────────────────────
+  function renderModal() {
+    const data    = filtered();
+    const pages   = Math.max(1, Math.ceil(data.length / PER_PAGE));
+    if (currentPage > pages) currentPage = pages;
+    const slice   = data.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
+
+    document.getElementById('modalCount').textContent = data.length + ' Tische verfügbar';
+    document.getElementById('pageInfo').textContent   = 'Seite ' + currentPage + ' von ' + pages;
+
+    // List
+    const list = document.getElementById('modalList');
+    list.innerHTML = slice.map(t => {
+      const seats = Array.from({length:4}, (_,i) =>
+        `<div class="row-seat ${i < t.occ ? 'occ' : ''}"></div>`).join('');
+      const badgeClass = t.status==='full' ? 'badge-full' : t.status==='waiting' ? 'badge-waiting' : 'badge-open';
+      const badgeText  = t.status==='full' ? 'VOLL'       : t.status==='waiting' ? 'WARTEN'        : 'FREI';
+      return `
+        <div class="modal-table-row ${t.status==='full'?'row-full':''}" onclick="joinTable('${t.name}',${t.status==='full'})">
+          <div class="row-number">#${t.id}</div>
+          <div class="row-mini-felt"></div>
+          <div class="row-name">${t.name}</div>
+          <div class="row-seats">${seats}</div>
+          <div class="row-badge ${badgeClass}">${badgeText}</div>
+        </div>`;
+    }).join('');
+
+    // Pagination
+    const pag = document.getElementById('pagination');
+    let html = '';
+    if (currentPage > 1) html += `<button class="page-btn" onclick="goPage(${currentPage-1})">‹</button>`;
+
+    let start = Math.max(1, currentPage-2);
+    let end   = Math.min(pages, start+4);
+    if (end - start < 4) start = Math.max(1, end-4);
+
+    for (let p = start; p <= end; p++) {
+      html += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    }
+    if (currentPage < pages) html += `<button class="page-btn" onclick="goPage(${currentPage+1})">›</button>`;
+    pag.innerHTML = html;
+  }
+
+  function goPage(p) { currentPage = p; renderModal(); }
+
+  function setFilter(btn, f) {
+    currentFilter = f;
+    currentPage   = 1;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderModal();
+  }
+
+  // ── Modal open/close ──────────────────────────────────────────
+  function openModal() {
+    renderModal();
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  // ── Join table ────────────────────────────────────────────────
+  function joinTable(name, isFull) {
+    if (isFull) return;
+    closeModal();
+    showToast('✓ Beigetreten: ' + name);
+  }
+
+  // ── Random join ───────────────────────────────────────────────
+  function joinRandom() {
+    const btn = document.getElementById('randomBtn');
+    btn.classList.add('spinning');
+    setTimeout(() => btn.classList.remove('spinning'), 600);
+
+    const open = allTables.filter(t => t.status !== 'full');
+    if (!open.length) { showToast('Keine freien Tische!'); return; }
+    const pick = open[Math.floor(Math.random() * open.length)];
+    setTimeout(() => showToast('🎲 Zufällig beigetreten: ' + pick.name), 300);
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>
